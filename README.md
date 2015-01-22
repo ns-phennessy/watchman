@@ -5,6 +5,7 @@ Watchman is simply a Python script that will watch for changes to files in a spe
 * Install it on a Linux system by placing the file in the `/bin/` or `/usr/bin/` directory. (You may wish to rename it from `watchman.py` to `watchman`)
 * In it's current state; it looks for a file called `.watchman.sh` which it will execute on a file change. This script should be in the directory the command is being launched from.
 * Command to use is `watchman`.
+* It accepts 1 command line argument which specifies the intended directory.
 
 ## Licence
 Released under the **MIT Licence**
