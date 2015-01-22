@@ -2,6 +2,7 @@
 import os, sys, time
 from zlib import adler32
 from blessings import Terminal
+from subprocess import call
 
 class Watchman:
 
@@ -9,18 +10,27 @@ class Watchman:
         oldHashes = {}
         newHashes = {}
         
-        if not callbacks:
-            callbacks = {
-                "onChange": self.__onChange, 
-                "onRemove": self.__onRemove, 
-                "onAdd": self.__onAdd
-            }
-
-        for file in self.__getFiles(dir, ignoreHidden):
+        defaultCallbacks = {
+            "onChange": self.__onChange, 
+            "onRemove": self.__onRemove, 
+            "onAdd": self.__onAdd
+        }
+        if(callbacks):
+            callbacks = dict(defaultCallbacks.items() + callbacks.items())
+        else:
+            callbacks = defaultCallbacks
+        
+        filenames = self.__getFiles(dir, ignoreHidden)
+        
+        if(len(filenames) > 25000):
+            self.__print("Thats a lot of files bro")
+            return
+        
+        for file in filenames:
             newHashes[file] = self.__getFileHash(file)
             oldHashes[file] = newHashes[file]
         
-        self.__print("Watching for file system changes")
+        self.__print("Watching [ " + str(len(filenames)) + " ] files for changes.")
         
         while True:
             filenames = self.__getFiles(dir, ignoreHidden)
@@ -68,8 +78,10 @@ class Watchman:
                         callbacks["onChange"](file)
                 except IOError:
                     continue
+                except KeyError:
+                    continue
             
-            time.sleep(0.1)
+            time.sleep(0.5)
                                      
     # Prints pretty colors to the screen                    
     def __print(self, string):
@@ -124,9 +136,18 @@ class Watchman:
 
 
     
+
+def execScript(file):
+    call(["bash", ".watchman.sh"])
+    
 def main():
+    directory = "."
+    
+    if(len(sys.argv) >= 2):
+        directory = sys.argv[1]
+    
     watchman = Watchman()
-    watchman.watch()
+    watchman.watch(dir=directory, callbacks={"onChange": execScript})
 
 if __name__ == '__main__':
 	try:
