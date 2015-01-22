@@ -15,8 +15,12 @@ class Watchman:
                 "onRemove": self.__onRemove, 
                 "onAdd": self.__onAdd
             }
+
+        for file in self.__getFiles(dir, ignoreHidden):
+            newHashes[file] = self.__getFileHash(file)
+            oldHashes[file] = newHashes[file]
         
-        self.__print("Watching for file system changes.")
+        self.__print("Watching for file system changes")
         
         while True:
             filenames = self.__getFiles(dir, ignoreHidden)
@@ -28,7 +32,12 @@ class Watchman:
                 for file in filesRemoved:
                     del(oldHashes[file])
                     del(newHashes[file])
-                    
+                
+                if(len(filesRemoved) <= 5):
+                    self.__print("Files " + str(filesRemoved) + " deleted")
+                else:
+                    self.__print(str(len(filesRemoved)) + " files deleted")
+
                 callbacks["onRemove"](filesRemoved)
                 continue
             
@@ -39,34 +48,48 @@ class Watchman:
                 for file in filesAdded:
                     oldHashes[file] = self.__getFileHash(file)
                     newHashes[file] = oldHashes[file]
-                    
+                
+                if(len(filesAdded) <= 5):
+                    self.__print("Files " + str(filesAdded) + " added")    
+                else:
+                    self.__print(str(len(filesAdded)) + " files added")
+                
                 callbacks["onAdd"](filesAdded)
                 continue
         
             # Check for changes
             for file in filenames:
-                newHashes[file] = self.__getFileHash(file)
+                try:
+                    newHashes[file] = self.__getFileHash(file)
                 
-                if(newHashes[file] != oldHashes[file]):
-                    oldHashes[file] = newHashes[file]
-                    callbacks["onChange"](file)
-                                    
-            time.sleep(0.1) 
-    
+                    if(newHashes[file] != oldHashes[file]):
+                        oldHashes[file] = newHashes[file]
+                        self.__print("Change detected in [" + file + "]")
+                        callbacks["onChange"](file)
+                except IOError:
+                    continue
+            
+            time.sleep(0.1)
+                                     
+    # Prints pretty colors to the screen                    
     def __print(self, string):
         t = Terminal()
         timestamp = time.strftime("%H:%M:%S")
         print t.bold + t.white + "[" + t.yellow + "Watchman v1.0" + t.white + "] " + t.normal + t.white + timestamp + " " + t.normal + string
     
+    # Triggered when something is changed
     def __onChange(self, file):
-        self.__print("Change detected in [" + file + "]")
-        
+        pass
+    
+    # Triggered when a file is deleted
     def __onRemove(self, files):
-        self.__print("Files " + str(files) + " deleted")
-        
+        pass
+    
+    # Triggered when a file is added
     def __onAdd(self, files):
-        self.__print("Files " + str(files) + " added")
+        pass
  
+    # Get the files in the specified space
     def __getFiles(self, dir, ignoreHidden):
         filenames = []
 
@@ -80,6 +103,7 @@ class Watchman:
 
         return filenames
     
+    # Get a Adler32 hash of specified file
     def __getFileHash(self, filename):
         hash = 0
 
