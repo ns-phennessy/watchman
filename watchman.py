@@ -23,14 +23,14 @@ class Watchman:
         filenames = self.__getFiles(dir, ignoreHidden)
         
         if(len(filenames) > 25000):
-            self.__print("Thats a lot of files bro")
+            self.mprint("Thats a lot of files bro")
             return
         
         for file in filenames:
             newHashes[file] = self.__getFileHash(file)
             oldHashes[file] = newHashes[file]
         
-        self.__print("Watching [ " + str(len(filenames)) + " ] files for changes.")
+        self.mprint("Watching [ " + str(len(filenames)) + " ] files for changes.")
         
         while True:
             filenames = self.__getFiles(dir, ignoreHidden)
@@ -44,9 +44,9 @@ class Watchman:
                     del(newHashes[file])
                 
                 if(len(filesRemoved) <= 5):
-                    self.__print("Files " + str(filesRemoved) + " deleted")
+                    self.mprint("Files " + str(filesRemoved) + " deleted")
                 else:
-                    self.__print(str(len(filesRemoved)) + " files deleted")
+                    self.mprint(str(len(filesRemoved)) + " files deleted")
 
                 callbacks["onRemove"](filesRemoved)
                 continue
@@ -60,9 +60,9 @@ class Watchman:
                     newHashes[file] = oldHashes[file]
                 
                 if(len(filesAdded) <= 5):
-                    self.__print("Files " + str(filesAdded) + " added")    
+                    self.mprint("Files " + str(filesAdded) + " added")    
                 else:
-                    self.__print(str(len(filesAdded)) + " files added")
+                    self.mprint(str(len(filesAdded)) + " files added")
                 
                 callbacks["onAdd"](filesAdded)
                 continue
@@ -74,7 +74,7 @@ class Watchman:
                 
                     if(newHashes[file] != oldHashes[file]):
                         oldHashes[file] = newHashes[file]
-                        self.__print("Change detected in [" + file + "]")
+                        self.mprint("Change detected in [" + file + "]")
                         callbacks["onChange"](file)
                 except IOError:
                     continue
@@ -84,7 +84,7 @@ class Watchman:
             time.sleep(0.5)
                                      
     # Prints pretty colors to the screen                    
-    def __print(self, string):
+    def mprint(self, string):
         t = Terminal()
         timestamp = time.strftime("%H:%M:%S")
         print t.bold + t.white + "[" + t.yellow + "Watchman v1.0" + t.white + "] " + t.normal + t.white + timestamp + " " + t.normal + string
@@ -138,8 +138,14 @@ class Watchman:
     
 
 def execScript(file):
-    call(["bash", ".watchman.sh"])
+    Watchman().mprint("\tExecuting '.watchman.sh' script")
+    retid = call(["bash", ".watchman.sh"])    
     
+    if(retid == 0):
+        Watchman().mprint("\tScript exited successfully")
+    else:
+        Watchman().mprint("\tScript exited with status: " + str(retid))
+
 def main():
     directory = "."
     
@@ -154,3 +160,4 @@ if __name__ == '__main__':
 		main()
 	except KeyboardInterrupt:
 		sys.exit(1)
+        
