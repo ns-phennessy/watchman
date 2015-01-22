@@ -23,7 +23,7 @@ class Watchman:
         filenames = self.__getFiles(dir, ignoreHidden)
         
         if(len(filenames) > 25000):
-            self.mprint("Thats a lot of files bro")
+            self.mprint("Thats a lot of files bro (" + str(len(filenames)) + ")")
             return
         
         for file in filenames:
@@ -121,7 +121,7 @@ class Watchman:
 
         with open(filename) as f:
             while True:
-                data = f.read(2048)
+                data = f.read(4096*4)
 
                 if not data:
                     break
